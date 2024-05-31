@@ -158,6 +158,11 @@ func (db *Database) createTables() error {
 		secret TEXT
 	  );
 	`
+	createTimingTableSQL := `
+	CREATE TABLE timinginfo (
+		name TEXT NOT NULL PRIMARY KEY,
+		time TEXT
+	  );
 
 	// A job has a unique id and is assigned a cluster
 	createJobsTableSQL := `

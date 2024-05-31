@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	pb "github.com/converged-computing/rainbow/pkg/api/v1"
 	"github.com/converged-computing/rainbow/pkg/database"
@@ -103,6 +104,7 @@ func (s *Server) RegisterSubsystem(_ context.Context, in *pb.RegisterRequest) (*
 }
 
 // SubmitJob submits a job to a specific cluster, or adds an entry to the database
+// Selects the cluster and submits the job to that cluster 
 func (s *Server) SubmitJob(_ context.Context, in *pb.SubmitJobRequest) (*pb.SubmitJobResponse, error) {
 	if in == nil {
 		return nil, errors.New("request is required")
@@ -152,6 +154,11 @@ func (s *Server) SubmitJob(_ context.Context, in *pb.SubmitJobRequest) (*pb.Subm
 	// A request can customize this on the fly, but currently no support
 	// for options. We will need to add support for multiple algorithms
 	// and options in the rainbow config
+
+	//Start select timer
+	fmt.Println("Measuring Select time in Go")
+	start := time.Now()
+
 	algo := s.selectionAlgorithm
 	if in.SelectAlgorithm != "" {
 		selectAlgo, err := selection.Get(in.SelectAlgorithm)
@@ -173,6 +180,10 @@ func (s *Server) SubmitJob(_ context.Context, in *pb.SubmitJobRequest) (*pb.Subm
 	if err != nil {
 		return nil, err
 	}
+
+	//End select timer
+	timeElapsed := time.Since(start)
+	fmt.Printf("The `for` loop took %s", timeElapsed)
 
 	// The user wants to get back all selected without assignment
 	if in.SatisfyOnly {
@@ -199,6 +210,7 @@ func (s *Server) SubmitJob(_ context.Context, in *pb.SubmitJobRequest) (*pb.Subm
 }
 
 // ReceiveJobs receives a cluster / instance / other receiving entity request for jobs
+// An example is the cluster receives 10 jobs, but can only accept 2 for whatever reason. 
 func (s *Server) ReceiveJobs(_ context.Context, in *pb.ReceiveJobsRequest) (*pb.ReceiveJobsResponse, error) {
 	if in == nil {
 		return nil, errors.New("request is required")
